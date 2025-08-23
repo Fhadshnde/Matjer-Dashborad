@@ -1,226 +1,216 @@
-import { useState, useRef } from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 
-export default function AddOfferModal({ onSubmit }) {
-  const [openModal, setOpenModal] = useState(false);
-  const [offerImage, setOfferImage] = useState("");
-  const fileInputRef = useRef(null);
+export default function AddOfferPage() {
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [image, setImage] = useState("");
+  const [isActive, setIsActive] = useState(true);
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [categories, setCategories] = useState([]);
+  const [sections, setSections] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [selectedSection, setSelectedSection] = useState("");
+  const [products, setProducts] = useState([]);
 
-  const showModal = () => setOpenModal(true);
+  useEffect(() => {
+    axios
+      .get("https://products-api.cbc-apps.net/products")
+      .then((res) => setProducts(res.data.products))
+      .catch((err) => console.error(err));
+  }, []);
 
-  const cancelModal = () => {
-    setOpenModal(false);
-    setOfferImage("");
-  };
+  useEffect(() => {
+    axios
+      .get("https://products-api.cbc-apps.net/categories")
+      .then((res) => setCategories(res.data.categories || res.data.products))
+      .catch((err) => console.error(err));
+  }, []);
 
-  const uploadImg = async (file) => {
-    if (!file) return;
+  useEffect(() => {
+    axios
+      .get("https://products-api.cbc-apps.net/sections")
+      .then((res) => setSections(res.data.sections || res.data.products))
+      .catch((err) => console.error(err));
+  }, []);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("يجب تسجيل الدخول أولاً");
+      return;
+    }
+    if (!selectedCategory || !selectedSection) {
+      alert("يجب اختيار الفئة والقسم");
+      return;
+    }
+    if (products.length === 0) {
+      alert("لا توجد منتجات للإرسال");
+      return;
+    }
+
+    const payload = {
+      title: title.trim(),
+      description: description.trim(),
+      image: image.trim(),
+      isActive,
+      startDate: new Date(startDate).toISOString(),
+      endDate: new Date(endDate).toISOString(),
+      categoryId: Number(selectedCategory),
+      sectionId: Number(selectedSection),
+      products: products.map((p) => ({
+        id: p.id,
+        name: p.name,
+        description: p.description,
+        originalPrice: p.originalPrice,
+        price: p.price,
+        wholesalePrice: p.wholesalePrice,
+        stock: p.stock,
+        averageRating: p.averageRating,
+        mainImageUrl: p.mainImageUrl,
+        categoryId: p.categoryId,
+        sectionId: p.sectionId,
+        supplierId: p.supplierId,
+        createdAt: p.createdAt,
+        updatedAt: p.updatedAt,
+        colors: p.colors,
+        measurements: p.measurements,
+        category: p.category,
+        section: p.section,
+        supplier: p.supplier,
+        displayPrice: p.displayPrice,
+        availablePrices: p.availablePrices,
+      })),
+    };
+
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      const token = localStorage.getItem("token");
-      const res = await fetch("https://products-api.cbc-apps.net/upload", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: formData,
-      });
-      const data = await res.json();
-      setOfferImage(data.url);
-    } catch (e) {
-      console.error(e);
+      const res = await axios.post(
+        "https://products-api.cbc-apps.net/offers/general",
+        payload,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      alert("تم إضافة العرض بنجاح!");
+      console.log(res.data);
+      setTitle("");
+      setDescription("");
+      setImage("");
+      setIsActive(true);
+      setStartDate("");
+      setEndDate("");
+      setSelectedCategory("");
+      setSelectedSection("");
+    } catch (err) {
+      console.error(err.response?.data || err);
+      alert(
+        "حدث خطأ أثناء إضافة العرض: " +
+          (err.response?.data?.message || "خطأ غير معروف")
+      );
     }
   };
-
-  const deleteImg = () => setOfferImage("");
-
-  const addOffer = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      await fetch("https://products-api.cbc-apps.net/offers/general", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ image: offerImage }),
-      });
-      cancelModal();
-      if (onSubmit) onSubmit();
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
-  const onModalContentClick = (e) => e.stopPropagation();
 
   return (
-    <>
-      <button
-        onClick={showModal}
-        className="px-4 py-2 bg-gradient-to-r from-[#F97316] to-[#EA580C] text-white font-semibold rounded-lg hover:shadow-lg hover:shadow-[#F97316]/25 transition-all flex items-center gap-2"
-      >
-        <svg
-          className="w-6 h-6"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="2"
-            d="M12 4v16m8-8H4"
+    <div className="max-w-6xl mx-auto p-6 bg-white rounded-lg shadow-md mt-10">
+      <h1 className="text-2xl font-bold mb-6">إضافة عرض جديد</h1>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="block mb-1 font-semibold">العنوان</label>
+          <input
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            className="w-full border p-2 rounded"
+            required
           />
-        </svg>
-        اضافة عرض
-      </button>
-
-      {openModal && (
-        <div
-          dir="rtl"
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 fade-modal-enter-to"
-          onClick={cancelModal}
-          style={{
-            animation: "fadeIn 0.4s ease-out forwards",
-          }}
-        >
-          <div
-            className="bg-[#1A1A1A] rounded-2xl h-[90%] w-full border border-white/5 shadow-2xl modal-content-enter-active max-w-lg"
-            onClick={onModalContentClick}
-            style={{
-              animation:
-                "modalBounceIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards",
-            }}
-          >
-            <div className="px-6 py-4 border-b border-white/5 bg-gradient-to-r from-[#5E54F2] to-[#7C3AED] rounded-t-2xl flex items-center justify-between">
-              <h3 className="text-xl font-bold text-white">اضافة عرض</h3>
-              <button
-                onClick={cancelModal}
-                className="text-white/80 hover:text-white transition-colors"
-                aria-label="Close modal"
-              >
-                <svg
-                  className="w-6 h-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-            </div>
-
-            <div className="p-6 space-y-4">
-              {!offerImage ? (
-                <label
-                  className="cursor-pointer rounded-lg shadow-sm w-full"
-                  htmlFor="file-upload"
-                >
-                  <input
-                    id="file-upload"
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    ref={fileInputRef}
-                    onChange={(e) => uploadImg(e.target.files[0])}
-                  />
-                  <div className="relative h-48 w-full border-2 border-dashed border-gray-300 hover:border-blue-500 bg-gray-50 hover:bg-blue-50 rounded-xl flex items-center justify-center text-center transition duration-200">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-12 w-12 text-gray-400"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-                      />
-                    </svg>
-                  </div>
-                </label>
-              ) : (
-                <div className="relative w-full h-48 rounded-xl overflow-hidden">
-                  <img
-                    className="w-full h-full object-cover"
-                    src={offerImage}
-                    alt="Offer"
-                  />
-                  <button
-                    onClick={deleteImg}
-                    className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full text-xs shadow-md"
-                  >
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M6 18L18 6M6 6l12 12"
-                      />
-                    </svg>
-                  </button>
-                </div>
-              )}
-            </div>
-
-            <div className="px-6 py-3 border-t border-white/5 flex items-center justify-start gap-3">
-              <button
-                onClick={addOffer}
-                className="px-6 py-2 bg-gradient-to-r from-[#F97316] to-[#EA580C] text-white font-semibold rounded-lg hover:shadow-lg hover:shadow-[#F97316]/25 transition-all"
-              >
-                اضافة عرض
-              </button>
-              <button
-                onClick={cancelModal}
-                className="px-5 py-2 text-[#94A3B8] hover:text-white transition-colors font-medium"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-
-          <style>{`
-            @keyframes fadeIn {
-              from {
-                opacity: 0;
-                backdrop-filter: blur(0px);
-              }
-              to {
-                opacity: 1;
-                backdrop-filter: blur(8px);
-                background-color: rgba(0, 0, 0, 0.6);
-              }
-            }
-
-            @keyframes modalBounceIn {
-              0% {
-                opacity: 0;
-                transform: scale(0.3) translateY(-100px) rotate(-10deg);
-              }
-              50% {
-                transform: scale(1.05) translateY(10px) rotate(2deg);
-              }
-              100% {
-                opacity: 1;
-                transform: scale(1) translateY(0) rotate(0deg);
-              }
-            }
-          `}</style>
         </div>
-      )}
-    </>
+        <div>
+          <label className="block mb-1 font-semibold">الوصف</label>
+          <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            className="w-full border p-2 rounded"
+            required
+          />
+        </div>
+        <div>
+          <label className="block mb-1 font-semibold">صورة العرض</label>
+          <input
+            type="text"
+            value={image}
+            onChange={(e) => setImage(e.target.value)}
+            placeholder="ضع رابط الصورة"
+            className="w-full border p-2 rounded"
+          />
+        </div>
+        <div className="flex gap-4">
+          <div className="flex-1">
+            <label className="block mb-1 font-semibold">تاريخ البداية</label>
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="w-full border p-2 rounded"
+              required
+            />
+          </div>
+          <div className="flex-1">
+            <label className="block mb-1 font-semibold">تاريخ النهاية</label>
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="w-full border p-2 rounded"
+              required
+            />
+          </div>
+        </div>
+        <div className="flex gap-4">
+          <div className="flex-1">
+            <label className="block mb-1 font-semibold">الفئة</label>
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="w-full border p-2 rounded"
+              required
+            >
+              <option value="">اختر الفئة</option>
+              {categories.map((cat) => (
+                <option key={cat.id} value={cat.id}>
+                  {cat.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="flex-1">
+            <label className="block mb-1 font-semibold">القسم</label>
+            <select
+              value={selectedSection}
+              onChange={(e) => setSelectedSection(e.target.value)}
+              className="w-full border p-2 rounded"
+              required
+            >
+              <option value="">اختر القسم</option>
+              {sections.map((sec) => (
+                <option key={sec.id} value={sec.id}>
+                  {sec.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+        <button
+          type="submit"
+          className="w-full bg-blue-600 text-white p-3 rounded hover:bg-blue-700"
+        >
+          إضافة العرض
+        </button>
+      </form>
+    </div>
   );
 }

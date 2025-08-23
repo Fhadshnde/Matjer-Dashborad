@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-// Assuming these are your modal components. You'll need to create them.
 import AddCategoryModal from '../components/addModals/category';
 import EditCategoryModal from '../components/editModals/category';
 import DeleteCategoryModal from '../components/deleteModal/deleteCategory';
@@ -9,10 +8,11 @@ const CategoriesManagement = () => {
 
   const fetchCategories = async () => {
     try {
-      // Replace with your actual API call.
       const response = await fetch('http://31.97.35.42:4500/categories');
       const data = await response.json();
-      setCategories(data.categories);
+      if (data && data.categories) {
+        setCategories(data.categories);
+      }
     } catch (error) {
       console.error('Error fetching categories:', error);
     }
@@ -36,56 +36,38 @@ const CategoriesManagement = () => {
         </div>
       </div>
 
-      {/* Category Stats */}
+      {/* Categories Stats */}
       <div dir="rtl" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="bg-[#1A1A1A] border border-white/5 rounded-xl p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-[#5E54F2]/20 to-[#7C3AED]/20 rounded-xl flex items-center justify-center">
-                <svg className="w-6 h-6 text-[#5E54F2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
-                </svg>
-              </div>
-              <span className="text-xs text-[#10B981] font-semibold bg-[#10B981]/20 px-2 py-1 rounded-full">+12%</span>
-            </div>
-            <h3 className="text-[#94A3B8] text-sm">مجموع الاقسام</h3>
-            <p className="text-2xl font-bold text-white mt-1">24</p>
+            <h3 className="text-[#94A3B8] text-sm">📂 مجموع الأقسام</h3>
+            <p className="text-2xl font-bold text-white mt-1">{categories.length}</p>
           </div>
-
           <div className="bg-[#1A1A1A] border border-white/5 rounded-xl p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-[#3B82F6]/20 to-[#2563EB]/20 rounded-xl flex items-center justify-center">
-                <svg className="w-6 h-6 text-[#3B82F6]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
-                </svg>
-              </div>
-              <span className="text-xs text-[#F97316] font-semibold bg-[#F97316]/20 px-2 py-1 rounded-full">+5%</span>
-            </div>
-            <h3 className="text-[#94A3B8] text-sm">مجموع المنتجات</h3>
-            <p className="text-2xl font-bold text-white mt-1">1,847</p>
+            <h3 className="text-[#94A3B8] text-sm">🛒 مجموع المنتجات</h3>
+            <p className="text-2xl font-bold text-white mt-1">
+              {categories.reduce((acc, cat) => acc + (cat.productsCount || 0), 0)}
+            </p>
           </div>
-        </div>
-      </div>
-
-      {/* Search Bar */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6">
-        <div className="relative">
-          {/* Your search bar content */}
         </div>
       </div>
 
       {/* Categories Grid */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {categories.map((category, index) => (
+          {categories.map((category) => (
             <div
-              key={index}
+              key={category.id}
               dir="rtl"
               className="category-card bg-[#1A1A1A] border border-white/5 rounded-xl p-6 hover:border-[#5E54F2]/50 transition-all group"
             >
               <div className="flex items-start justify-between mb-4">
-                <div className="w-14 h-14 bg-gradient-to-br from-[#5E54F2] to-[#7C3AED] rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <img className="rounded-xl" src={category.image} alt={category.name} />
+                <div className="w-14 h-14 bg-gradient-to-br from-[#5E54F2] to-[#7C3AED] rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform overflow-hidden">
+                  {category.image ? (
+                    <img className="w-full h-full object-cover rounded-xl" src={category.image} alt={category.name} />
+                  ) : (
+                    <span className="text-white text-sm">No Image</span>
+                  )}
                 </div>
                 <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button className="p-2 text-[#94A3B8] hover:text-white hover:bg-white/5 rounded-lg transition-all">
@@ -98,7 +80,26 @@ const CategoriesManagement = () => {
               </div>
 
               <h3 className="text-xl font-semibold text-white mb-2">{category.name}</h3>
-              <p className="text-sm text-[#94A3B8] mb-4">{category.description}</p>
+              <p className="text-sm text-[#94A3B8] mb-4">{category.description || 'بدون وصف'}</p>
+
+              <div className="text-sm text-[#CBD5E1]">
+                <p>🛒 عدد المنتجات: {category.productsCount}</p>
+                <p>📂 عدد الأقسام الفرعية: {category.sectionsCount}</p>
+              </div>
+
+              {/* عرض الأقسام التابعة */}
+              {category.sections && category.sections.length > 0 && (
+                <div className="mt-4">
+                  <h4 className="text-[#5E54F2] text-sm font-semibold mb-2">الأقسام التابعة:</h4>
+                  <ul className="list-disc list-inside text-[#94A3B8] text-sm space-y-1">
+                    {category.sections.map((section) => (
+                      <li key={section.id}>
+                        {section.name} ({section.productsCount} منتج)
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           ))}
 
@@ -110,8 +111,8 @@ const CategoriesManagement = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path>
                 </svg>
               </div>
-              <h3 className="text-lg font-semibold text-white mb-2">Add New Category</h3>
-              <p className="text-sm text-[#94A3B8]">Create a new category to organize products</p>
+              <h3 className="text-lg font-semibold text-white mb-2">إضافة قسم جديد</h3>
+              <p className="text-sm text-[#94A3B8]">قم بإنشاء قسم جديد لتنظيم المنتجات</p>
             </div>
           </div>
         </div>
