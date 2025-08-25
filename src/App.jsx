@@ -1,12 +1,12 @@
 import React from 'react'
 import { Route, Routes } from 'react-router-dom'
 import Home from './pages/Home.jsx'
-import Products from './pages/Products.jsx'
-import Categories from './pages/Categories.jsx'
+import Products from './pages/ProductsManagement.jsx'
+import Categories from './pages/CategoriesManagement.jsx'
 import Navbar from './components/Navbar/Navbar.jsx'
 import Login from './pages/Login.jsx'
-import Offers from './pages/offers.jsx'
-import SubSections from './pages/subSections.jsx'
+import Offers from './pages/OffersManagement.jsx'
+import SubSections from './pages/SubSections.jsx'
 import Discounts from './pages/Discounts.jsx'
 
 const App = () => {
