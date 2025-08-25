@@ -6,6 +6,8 @@ import Categories from './pages/Categories.jsx'
 import Navbar from './components/Navbar/Navbar.jsx'
 import Login from './pages/Login.jsx'
 import Offers from './pages/offers.jsx'
+import SubSections from './pages/subSections.jsx'
+import Discounts from './pages/Discounts.jsx'
 
 const App = () => {
   return (
@@ -18,6 +20,8 @@ const App = () => {
         <Route path='/categories' element={<Categories />} />
         <Route path='/login' element={<Login />} />
         <Route path='/offers' element={<Offers />} />
+        <Route path='/subSections' element={<SubSections />} />
+        <Route path='/discounts' element={<Discounts />} />
         <Route path='*' element={<h1>mwdwdjwedjwd</h1>} />
 
       </Routes>
